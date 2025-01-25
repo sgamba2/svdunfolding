@@ -10,7 +10,7 @@ class SVDunfold:
     class to unfold data
     '''
 
-    def __init__(self, x_ini, b, A, xmin,xmax,bmin,bmax,eps):
+    def __init__(self, x_ini, b, A, B, xmin,xmax,bmin,bmax,eps):
         self._x_ini=x_ini #simulated to be the real energy
         self._b=b #measured
         self._A=A #2d event matrix
@@ -24,11 +24,11 @@ class SVDunfold:
         self._d=None
         self._d_reg=None
         self._VT=None
+        self._B=B
         self._x_unfolded=None
         self._X_unfolded_covariance=None
         self._nx=len(self._x_ini[0])
         self._nb=len(self._b[0])
-        self._cov=self.__diagonal_covariance()
         self._C=self.__second_deriv_matrix(eps)
         self._C_inv=np.linalg.inv(self._C)
         #assert(self._A.shape[0] == self._nb), "Wrong dimensions of A: bins in b != rows in A"
@@ -45,17 +45,9 @@ class SVDunfold:
         c_matrix[0, 0] = -1 + xi
         c_matrix[self._nx - 1, self._nx - 1] = -1 + xi
         return c_matrix
-
-    def __diagonal_covariance(self):
-        B = np.zeros(shape=(self._nb,self._nb))
-        std_dev = np.sqrt(self._b[0])
-        for i in range(self._nb):
-            B[i, i] = std_dev[i] * std_dev[i] #indipendent bin values
-        return B
-
         
     def pre_unfolding(self):
-        Q, R, _ = np.linalg.svd(self._cov, full_matrices=False)
+        Q, R, _ = np.linalg.svd(self._B, full_matrices=False)
         self._r=np.sqrt(R)
         A_tilde=self.__get_A_tilde(Q)
         b_tilde=self.__get_b_tilde(Q)
@@ -112,4 +104,4 @@ class SVDunfold:
         return np.abs(self._d)
         
     def get_cov(self):
-        return self._cov
+        return self._B
